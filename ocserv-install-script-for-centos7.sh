@@ -609,7 +609,7 @@ function PrintResult {
 }
 
 ConfigEnvironmentVariable
-CompileOcserv
+CompileOcserv $@
 ConfigOcserv
 ConfigFirewall
 ConfigSystem
