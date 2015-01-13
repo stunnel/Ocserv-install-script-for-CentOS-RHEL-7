@@ -14,10 +14,11 @@ Ocserv install script for CentOS&RHEL 7
 * 配置文件修改为单 IP 允许 10 个连接，全局 1024 个连接，可修改脚本前面的变量。1024 个连接大约需要 2048 个 IP，所以虚拟接口的 IP 配置了 8 个 C 段。<br />
 
 安装脚本分为以下几大块，如果中间有错误，可以注释掉部分然后重新执行脚本，ConfigEnvironmentVariable 为必须，后面的脚本会使用这里的变量<br />
-ConfigEnvironmentVariable // 配置环境变量<br />
-PrintEnvironmentVariable // 打印环境变量<br />
-CompileOcserv $@ // 下载并编译 ocserv<br />
-ConfigOcserv // 配置 ocserv，包括修改 ocserv.conf，配置 ocserv.service<br />
-ConfigFirewall // 配置防火墙，会自动判断防火墙为 iptables 或 firewalld<br />
-ConfigSystem  // 配置系统<br />
-PrintResult // 大约最后的安装结果和 VPN 账号等<br />
+
+* ConfigEnvironmentVariable // 配置环境变量<br />
+* PrintEnvironmentVariable // 打印环境变量<br />
+* CompileOcserv $@ // 下载并编译 ocserv<br />
+* ConfigOcserv // 配置 ocserv，包括修改 ocserv.conf，配置 ocserv.service<br />
+* ConfigFirewall // 配置防火墙，会自动判断防火墙为 iptables 或 firewalld<br />
+* ConfigSystem  // 配置系统<br />
+* PrintResult // 大约最后的安装结果和 VPN 账号等<br />
