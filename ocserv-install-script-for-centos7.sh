@@ -609,9 +609,8 @@ function PrintResult {
 }
 
 ConfigEnvironmentVariable
-CompileOcserv $@
-ConfigOcserv
+#CompileOcserv $@
+#ConfigOcserv
 ConfigFirewall
-ConfigSystem
+#ConfigSystem
 PrintResult
-exit 0
