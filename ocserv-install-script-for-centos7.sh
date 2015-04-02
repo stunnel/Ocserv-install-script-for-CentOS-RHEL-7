@@ -10,6 +10,7 @@
 
 #  Version: 1.2.2 20150402
 #  *兼容CentOS 7.1，编译libtasn1-4.4替换系统的3.8版
+#  *修正 修改src/vpn.h路由条数 的命令
 
 #  +增加firewalld和iptables检测功能，使用systemctl is-active判断哪个防火墙在运行，请确保有一个防火墙自启动并加载默认配置
 #  *把几个功能用function分隔，如果脚本运行遇到问题，可以注释已经完成的部分，修正后继续
@@ -130,7 +131,7 @@ function PrintEnvironmentVariable {
 function CompileOcserv {
     #升级系统
     #yum update -y -q
-    rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
+    yum install -y -q epel-release
     #安装ocserv依赖组件
     yum install -y gnutls gnutls-utils gnutls-devel readline readline-devel \
     libnl-devel libtalloc libtalloc-devel libnl3-devel wget \
@@ -141,7 +142,7 @@ function CompileOcserv {
     http-parser-devel http-parser protobuf-c-devel protobuf-c \
     pcllib-devel pcllib cyrus-sasl-gssapi
 
-    wget http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.4.tar.gz
+    wget -t 0 -T 60 http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.4.tar.gz
     tar axf libtasn1-4.4.tar.gz
     cd libtasn1-4.4
     ./configure --prefix=/usr --libdir=/usr/lib64 --includedir=/usr/include
