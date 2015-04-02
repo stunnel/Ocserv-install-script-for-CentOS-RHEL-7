@@ -2,13 +2,15 @@
 ####################################################
 #                                                  #
 # This is a ocserv installation for CentOS 7       #
-# Version: 1.2.0 20150102                          #
+# Version: 1.2.2 20150402                          #
 # Author: Travis Lee                               #
-# Website: http://www.stunnel.info                 #
+# Website: https://www.stunnel.info                #
 #                                                  #
 ####################################################
 
-#  Version: 1.2.0 20150102
+#  Version: 1.2.2 20150402
+#  *兼容CentOS 7.1，编译libtasn1-4.4替换系统的3.8版
+
 #  +增加firewalld和iptables检测功能，使用systemctl is-active判断哪个防火墙在运行，请确保有一个防火墙自启动并加载默认配置
 #  *把几个功能用function分隔，如果脚本运行遇到问题，可以注释已经完成的部分，修正后继续
 
@@ -30,23 +32,22 @@ basepath=$(dirname $0)
 cd $basepath
 
 function ConfigEnvironmentVariable {
+    #ocserv版本
+    ocserv_version=0.10.2
+    version=${1-$ocserv_version}
     #变量设置
     #单IP最大连接数，默认是2
     maxsameclients=10
     #最大连接数，默认是16
     maxclients=1024
-    #ocserv版本
-    version=${1-0.8.9}
     #服务器的证书和key文件，放在本脚本的同目录下，key文件的权限应该是600或者400
-    servercert=server-cert.pem
-    serverkey=server-key.pem
+    servercert=${2-server-cert.pem}
+    serverkey=${3-server-key.pem}
     #配置目录，你可更改为 /etc/ocserv 之类的
     confdir=/usr/local/etc/ocserv
 
-    #升级系统，安装系统组件
-    #yum update -y
-    yum install -y gcc wget pcre-devel tar net-tools \
-    openssl openssl-devel curl-devel bind-utils
+    #安装系统组件
+    yum install -y -q net-tools bind-utils
     #获取网卡接口名称
     ethlist=$(ifconfig | grep ": flags" | cut -d ":" -f1)
     eth=$(printf "$ethlist\n" | head -n 1)
@@ -98,7 +99,9 @@ function ConfigEnvironmentVariable {
     if [[ -n "$passwordtmp" ]]; then
         password=$passwordtmp
     fi
+}
 
+function PrintEnvironmentVariable {
     #打印配置参数
     clear
     ipv4=$(ip -4 -f inet addr | grep "inet " | grep -v "lo:" | grep -v "127.0.0.1" | grep -o -P "\d+\.\d+\.\d+\.\d+\/\d+" | grep -o -P "\d+\.\d+\.\d+\.\d+")
@@ -125,25 +128,35 @@ function ConfigEnvironmentVariable {
 }
 
 function CompileOcserv {
+    #升级系统
+    #yum update -y -q
+    rpm -ivh http://dl.fedoraproject.org/pub/epel/7/x86_64/e/epel-release-7-5.noarch.rpm
     #安装ocserv依赖组件
     yum install -y gnutls gnutls-utils gnutls-devel readline readline-devel \
-    libnl-devel libtalloc libtalloc-devel libnl3-devel \
-    unbound pam pam-devel libtalloc-devel xz libseccomp-devel \
-    tcp_wrappers-devel autogen autogen-libopts-devel
+    libnl-devel libtalloc libtalloc-devel libnl3-devel wget \
+    pam pam-devel libtalloc-devel xz libseccomp-devel \
+    tcp_wrappers-devel autogen autogen-libopts-devel tar \
+    gcc pcre-devel openssl openssl-devel curl-devel \
+    freeradius-client-devel freeradius-client lz4-devel lz4 \
+    http-parser-devel http-parser protobuf-c-devel protobuf-c \
+    pcllib-devel pcllib cyrus-sasl-gssapi
 
-    #关闭selinux，增加libgnutls环境变量
-    sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
-    setenforce 0
-    export LIBGNUTLS_CFLAGS="-I/usr/include/" LIBGNUTLS_LIBS="-L/usr/lib/ -lgnutls"
+    wget http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.4.tar.gz
+    tar axf libtasn1-4.4.tar.gz
+    cd libtasn1-4.4
+    ./configure --prefix=/usr --libdir=/usr/lib64 --includedir=/usr/include
+    make && make install
+    cd ..
+
+    #增加libgnutls环境变量
+     ##export LIBGNUTLS_CFLAGS="-I/usr/include/" LIBGNUTLS_LIBS="-L/usr/lib/ -lgnutls"
 
     #下载ocserv并编译安装
     wget -t 0 -T 60 "ftp://ftp.infradead.org/pub/ocserv/ocserv-$version.tar.xz"
     tar axf ocserv-$version.tar.xz
     cd ocserv-$version
-    sed -i 's/define MAX_CONFIG_ENTRIES 64/define MAX_CONFIG_ENTRIES 400/g' src/vpn.h
-    ./configure
-    make
-    make install
+     sed -i 's/#define MAX_CONFIG_ENTRIES.*/#define MAX_CONFIG_ENTRIES 200/g' src/vpn.h
+    ./configure && make && make install
 
     #复制配置文件样本
     mkdir -p "$confdir"
@@ -523,28 +536,13 @@ iptablesisactive=$(systemctl is-active iptables.service)
 
 if [[ $firewalldisactive = 'active' ]]; then
     #添加防火墙允许列表
-    cat << _EOF_ >/usr/lib/firewalld/services/ocserv.xml
-<?xml version="1.0" encoding="utf-8"?>
-<service>
-  <short>ocserv</short>
-  <description>Cisco AnyConnect</description>
-  <port protocol="tcp" port="$port"/>
-  <port protocol="udp" port="$port"/>
-</service>
-_EOF_
-
-    systemctl restart firewalld
     echo "Adding firewall ports."
-    firewall-cmd --permanent --add-service=ocserv
-    echo "Allows firewall to forward."
+    firewall-cmd --permanent --add-port=$port/tcp
+    firewall-cmd --permanent --add-port=$port/udp
+    echo "Allow firewall to forward."
     firewall-cmd --permanent --add-masquerade
-    sleep 1
     echo "Reload firewall configure."
     firewall-cmd --reload
-    sleep 1
-    #firewall-cmd --direct --add-rule ipv4 filter FORWARD 0 -s 192.168.8.0/21 -j ACCEPT
-    ##firewall-cmd --direct --add-rule ipv4 filter FORWARD 0 -s 192.168.8.0/21 -o $eth -j ACCEPT
-    #firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -s 192.168.8.0/21 -o $eth -j MASQUERADE
 elif [[ $iptablesisactive = 'active' ]]; then
     iptables -I INPUT -p tcp --dport $port -j ACCEPT
     iptables -I INPUT -p udp --dport $port -j ACCEPT
@@ -557,6 +555,9 @@ fi
 }
 
 function ConfigSystem {
+    #关闭selinux
+    sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
+    setenforce 0
     #修改系统
     echo "Enable IP forward."
     sysctl -w net.ipv4.ip_forward=1
@@ -589,14 +590,12 @@ function PrintResult {
     lineudp=$(netstat -anp | grep ":$port" | grep ocserv | grep udp | wc -l)
     if [[ $linetcp -ge 1 && $lineudp -ge 1 ]]
     then
-        printf "\e[34mocserv service is OK! \e[0m\n"
+        printf "\e[34mocserv service is Fine! \e[0m\n"
     else
         printf "\e[33mWARNING!!! ocserv service is NOT Running! \e[0m\n"
     fi
 
     #打印VPN参数
-    #ipv4=$(ip -4 -f inet addr | grep "inet " | grep -v "lo:" | grep -v "127.0.0.1" | grep -o -P "\d+\.\d+\.\d+\.\d+\/\d+" | grep -o -P "\d+\.\d+\.\d+\.\d+")
-    #ipv6=$(ip -6 addr | grep "inet6" | grep -v "::1/128" | grep -o -P "([a-z\d]+:[a-z\d:]+\/\d+)" | grep -o -P "([a-z\d]+:[a-z\d:]+)")
     printf "
     if there are \e[33mNO WARNING\e[0m above, then you can connect to
     your ocserv VPN Server with the default user/password below:
@@ -609,6 +608,7 @@ function PrintResult {
 }
 
 ConfigEnvironmentVariable
+PrintEnvironmentVariable
 CompileOcserv $@
 ConfigOcserv
 ConfigFirewall
