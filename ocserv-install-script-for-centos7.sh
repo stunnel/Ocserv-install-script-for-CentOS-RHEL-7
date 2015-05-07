@@ -2,11 +2,15 @@
 ####################################################
 #                                                  #
 # This is a ocserv installation for CentOS 7       #
-# Version: 1.2.2 20150402                          #
+# Version: 1.2.3 20150508                          #
 # Author: Travis Lee                               #
 # Website: https://www.stunnel.info                #
 #                                                  #
 ####################################################
+
+#  Version: 1.2.3 20150508
+#  *更新libtasn1的版本为4.5
+#  *更新ocserv的版本为0.10.4
 
 #  Version: 1.2.2 20150402
 #  *兼容CentOS 7.1，编译libtasn1-4.4替换系统的3.8版
@@ -30,12 +34,13 @@ if [[ $(grep "release 7." /etc/redhat-release 2>/dev/null | wc -l) -eq 0 ]]; the
 fi
 
 basepath=$(dirname $0)
-cd $basepath
+cd ${basepath}
 
 function ConfigEnvironmentVariable {
     #ocserv版本
-    ocserv_version=0.10.2
-    version=${1-$ocserv_version}
+    ocserv_version=0.10.4
+    version=${1-${ocserv_version}}
+    libtasn1_version=4.5
     #变量设置
     #单IP最大连接数，默认是2
     maxsameclients=10
@@ -45,42 +50,42 @@ function ConfigEnvironmentVariable {
     servercert=${2-server-cert.pem}
     serverkey=${3-server-key.pem}
     #配置目录，你可更改为 /etc/ocserv 之类的
-    confdir=/usr/local/etc/ocserv
+    confdir="/usr/local/etc/ocserv"
 
     #安装系统组件
     yum install -y -q net-tools bind-utils
     #获取网卡接口名称
     ethlist=$(ifconfig | grep ": flags" | cut -d ":" -f1)
-    eth=$(printf "$ethlist\n" | head -n 1)
-    if [[ $(printf "$ethlist\n" | wc -l) -gt 2 ]]; then
+    eth=$(printf "${ethlist}\n" | head -n 1)
+    if [[ $(printf "${ethlist}\n" | wc -l) -gt 2 ]]; then
         echo ======================================
         echo "Network Interface list:"
-        printf "\e[33m$ethlist\e[0m\n"
+        printf "\e[33m${ethlist}\e[0m\n"
         echo ======================================
         echo "Which network interface you want to listen for ocserv?"
-        printf "Default network interface is \e[33m$eth\e[0m, let it blank to use default network interface: "
+        printf "Default network interface is \e[33m${eth}\e[0m, let it blank to use default network interface: "
         read ethtmp
-        if [[ -n "$ethtmp" ]]; then
-            eth=$ethtmp
+        if [[ -n "${ethtmp}" ]]; then
+            eth=${ethtmp}
         fi
     fi
 
     #端口，默认是10443
     port=10443
     echo "Please input the port ocserv listen to."
-    printf "Default port is \e[33m$port\e[0m, let it blank to use default port: "
+    printf "Default port is \e[33m${port}\e[0m, let it blank to use default port: "
     read porttmp
-    if [[ -n "$porttmp" ]]; then
-        port=$porttmp
+    if [[ -n "${porttmp}" ]]; then
+        port=${porttmp}
     fi
 
     #用户名，默认是user
     username=user
     echo "Please input ocserv user name:"
-    printf "Default user name is \e[33m$username\e[0m, let it blank to use default user name: "
+    printf "Default user name is \e[33m${username}\e[0m, let it blank to use default user name: "
     read usernametmp
-    if [[ -n "$usernametmp" ]]; then
-        username=$usernametmp
+    if [[ -n "${usernametmp}" ]]; then
+        username=${usernametmp}
     fi
 
     #随机密码
@@ -91,14 +96,14 @@ function ConfigEnvironmentVariable {
         for i in {A..Z}; do arr[index]=$i; index=$(expr ${index} + 1); done
         for i in {0..9}; do arr[index]=$i; index=$(expr ${index} + 1); done
         for i in {1..10}; do str="$str${arr[$RANDOM%$index]}"; done
-        echo $str
+        echo ${str}
     }
     password=$(randstr)
-    printf "Please input \e[33m$username\e[0m's password:\n"
-    printf "Default password is \e[33m$password\e[0m, let it blank to use default password: "
+    printf "Please input \e[33m${username}\e[0m's password:\n"
+    printf "Default password is \e[33m${password}\e[0m, let it blank to use default password: "
     read passwordtmp
-    if [[ -n "$passwordtmp" ]]; then
-        password=$passwordtmp
+    if [[ -n "${passwordtmp}" ]]; then
+        password=${passwordtmp}
     fi
 }
 
@@ -107,11 +112,11 @@ function PrintEnvironmentVariable {
     clear
     ipv4=$(ip -4 -f inet addr | grep "inet " | grep -v "lo:" | grep -v "127.0.0.1" | grep -o -P "\d+\.\d+\.\d+\.\d+\/\d+" | grep -o -P "\d+\.\d+\.\d+\.\d+")
     ipv6=$(ip -6 addr | grep "inet6" | grep -v "::1/128" | grep -o -P "([a-z\d]+:[a-z\d:]+\/\d+)" | grep -o -P "([a-z\d]+:[a-z\d:]+)")
-    echo -e "IPv4:\t\t\e[34m$(echo $ipv4)\e[0m"
-    echo -e "IPv6:\t\t\e[34m$(echo $ipv6)\e[0m"
-    echo -e "Port:\t\t\e[34m$port\e[0m"
-    echo -e "username:\t\e[34m$username\e[0m"
-    echo -e "password:\t\e[34m$password\e[0m"
+    echo -e "IPv4:\t\t\e[34m$(echo ${ipv4})\e[0m"
+    echo -e "IPv6:\t\t\e[34m$(echo ${ipv6})\e[0m"
+    echo -e "Port:\t\t\e[34m${port}\e[0m"
+    echo -e "Username:\t\e[34m${username}\e[0m"
+    echo -e "Password:\t\e[34m${password}\e[0m"
     echo
     echo "Press any key to start install ocserv."
 
@@ -122,7 +127,7 @@ function PrintEnvironmentVariable {
         dd if=/dev/tty bs=1 count=1 2> /dev/null
         stty -raw
         stty echo
-        stty $SAVEDSTTY
+        stty ${SAVEDSTTY}
     }
     char=$(get_char)
     clear
@@ -140,11 +145,11 @@ function CompileOcserv {
     gcc pcre-devel openssl openssl-devel curl-devel \
     freeradius-client-devel freeradius-client lz4-devel lz4 \
     http-parser-devel http-parser protobuf-c-devel protobuf-c \
-    pcllib-devel pcllib cyrus-sasl-gssapi
+    pcllib-devel pcllib cyrus-sasl-gssapi dbus-devel
 
-    wget -t 0 -T 60 http://ftp.gnu.org/gnu/libtasn1/libtasn1-4.4.tar.gz
-    tar axf libtasn1-4.4.tar.gz
-    cd libtasn1-4.4
+    wget -t 0 -T 60 "http://ftp.gnu.org/gnu/libtasn1/libtasn1-${libtasn1_version}.tar.gz"
+    tar axf libtasn1-${libtasn1_version}.tar.gz
+    cd libtasn1-${libtasn1_version}
     ./configure --prefix=/usr --libdir=/usr/lib64 --includedir=/usr/include
     make && make install
     cd ..
@@ -153,22 +158,22 @@ function CompileOcserv {
      ##export LIBGNUTLS_CFLAGS="-I/usr/include/" LIBGNUTLS_LIBS="-L/usr/lib/ -lgnutls"
 
     #下载ocserv并编译安装
-    wget -t 0 -T 60 "ftp://ftp.infradead.org/pub/ocserv/ocserv-$version.tar.xz"
-    tar axf ocserv-$version.tar.xz
-    cd ocserv-$version
-     sed -i 's/#define MAX_CONFIG_ENTRIES.*/#define MAX_CONFIG_ENTRIES 200/g' src/vpn.h
+    wget -t 0 -T 60 "ftp://ftp.infradead.org/pub/ocserv/ocserv-${version}.tar.xz"
+    tar axf ocserv-${version}.tar.xz
+    cd ocserv-${version}
+    sed -i 's/#define MAX_CONFIG_ENTRIES.*/#define MAX_CONFIG_ENTRIES 200/g' src/vpn.h
     ./configure && make && make install
 
     #复制配置文件样本
-    mkdir -p "$confdir"
-    cp "doc/sample.config" "$confdir/ocserv.conf"
+    mkdir -p "${confdir}"
+    cp "doc/sample.config" "${confdir}/ocserv.conf"
     cp "doc/systemd/standalone/ocserv.service" "/usr/lib/systemd/system/ocserv.service"
-    cd $basepath
+    cd ${basepath}
 }
 
 function ConfigOcserv {
     #检测是否有证书和key文件
-    if [[ ! -f "$servercert" ]] || [[ ! -f "$serverkey" ]]; then
+    if [[ ! -f "${servercert}" ]] || [[ ! -f "${serverkey}" ]]; then
         #创建ca证书和服务器证书（参考http://www.infradead.org/ocserv/manual.html#heading5）
         certtool --generate-privkey --outfile ca-key.pem
 
@@ -185,7 +190,7 @@ _EOF_
 
         certtool --generate-self-signed --load-privkey ca-key.pem \
         --template ca.tmpl --outfile ca-cert.pem
-        certtool --generate-privkey --outfile $serverkey
+        certtool --generate-privkey --outfile ${serverkey}
 
         cat << _EOF_ >server.tmpl
 cn = "stunnel.info VPN"
@@ -197,34 +202,34 @@ encryption_key #only if the generated key is an RSA one
 tls_www_server
 _EOF_
 
-        certtool --generate-certificate --load-privkey $serverkey \
+        certtool --generate-certificate --load-privkey ${serverkey} \
         --load-ca-certificate ca-cert.pem --load-ca-privkey ca-key.pem \
-        --template server.tmpl --outfile $servercert
+        --template server.tmpl --outfile ${servercert}
     fi
 
     #把证书复制到ocserv的配置目录
-    cp "$servercert" "$confdir" && cp "$serverkey" "$confdir"
+    cp "${servercert}" "${confdir}" && cp "${serverkey}" "${confdir}"
 
     #编辑配置文件
-    (echo "$password"; sleep 1; echo "$password") | ocpasswd -c "$confdir/ocpasswd" $username
+    (echo "${password}"; sleep 1; echo "${password}") | ocpasswd -c "${confdir}/ocpasswd" ${username}
 
-    sed -i "s#./sample.passwd#$confdir/ocpasswd#g" "$confdir/ocserv.conf"
-    sed -i "s#server-cert = ../tests/server-cert.pem#server-cert = $confdir/$servercert#g" "$confdir/ocserv.conf"
-    sed -i "s#server-key = ../tests/server-key.pem#server-key = $confdir/$serverkey#g" "$confdir/ocserv.conf"
-    sed -i "s/max-same-clients = 2/max-same-clients = $maxsameclients/g" "$confdir/ocserv.conf"
-    sed -i "s/max-clients = 16/max-clients = $maxclients/g" "$confdir/ocserv.conf"
-    sed -i "s/tcp-port = 443/tcp-port = $port/g" "$confdir/ocserv.conf"
-    sed -i "s/udp-port = 443/udp-port = $port/g" "$confdir/ocserv.conf"
-    sed -i "s/default-domain = example.com/#default-domain = example.com/g" "$confdir/ocserv.conf"
-    sed -i "s/ipv4-network = 192.168.1.0/ipv4-network = 192.168.8.0/g" "$confdir/ocserv.conf"
-    sed -i "s/ipv4-netmask = 255.255.255.0/ipv4-netmask = 255.255.251.0/g" "$confdir/ocserv.conf"
-    sed -i "s/dns = 192.168.1.2/dns = 8.8.8.8\ndns = 8.8.4.4/g" "$confdir/ocserv.conf"
-    sed -i "s/run-as-group = daemon/run-as-group = nobody/g" "$confdir/ocserv.conf"
-    sed -i "s/cookie-timeout = 300/cookie-timeout = 86400/g" "$confdir/ocserv.conf"
-    sed -i 's$route = 192.168.1.0/255.255.255.0$#route = 192.168.1.0/255.255.255.0$g' "$confdir/ocserv.conf"
-    sed -i 's$route = 192.168.5.0/255.255.255.0$#route = 192.168.5.0/255.255.255.0$g' "$confdir/ocserv.conf"
+    sed -i "s#./sample.passwd#${confdir}/ocpasswd#g" "${confdir}/ocserv.conf"
+    sed -i "s#server-cert = ../tests/server-cert.pem#server-cert = ${confdir}/${servercert}#g" "${confdir}/ocserv.conf"
+    sed -i "s#server-key = ../tests/server-key.pem#server-key = ${confdir}/${serverkey}#g" "${confdir}/ocserv.conf"
+    sed -i "s/max-same-clients = 2/max-same-clients = ${maxsameclients}/g" "${confdir}/ocserv.conf"
+    sed -i "s/max-clients = 16/max-clients = ${maxclients}/g" "${confdir}/ocserv.conf"
+    sed -i "s/tcp-port = 443/tcp-port = ${port}/g" "${confdir}/ocserv.conf"
+    sed -i "s/udp-port = 443/udp-port = ${port}/g" "${confdir}/ocserv.conf"
+    sed -i "s/default-domain = example.com/#default-domain = example.com/g" "${confdir}/ocserv.conf"
+    sed -i "s/ipv4-network = 192.168.1.0/ipv4-network = 192.168.8.0/g" "${confdir}/ocserv.conf"
+    sed -i "s/ipv4-netmask = 255.255.255.0/ipv4-netmask = 255.255.251.0/g" "${confdir}/ocserv.conf"
+    sed -i "s/dns = 192.168.1.2/dns = 8.8.8.8\ndns = 8.8.4.4/g" "${confdir}/ocserv.conf"
+    sed -i "s/run-as-group = daemon/run-as-group = nobody/g" "${confdir}/ocserv.conf"
+    sed -i "s/cookie-timeout = 300/cookie-timeout = 86400/g" "${confdir}/ocserv.conf"
+    sed -i 's$route = 192.168.1.0/255.255.255.0$#route = 192.168.1.0/255.255.255.0$g' "${confdir}/ocserv.conf"
+    sed -i 's$route = 192.168.5.0/255.255.255.0$#route = 192.168.5.0/255.255.255.0$g' "${confdir}/ocserv.conf"
 
-    cat << _EOF_ >>$confdir/ocserv.conf
+    cat << _EOF_ >>${confdir}/ocserv.conf
 # Apple
 route = 17.0.0.0/255.0.0.0
 route = 192.12.74.0/255.255.255.0
@@ -525,7 +530,7 @@ route = 60.199.217.0/255.255.255.0
 _EOF_
 
     #修改ocserv服务
-    #sed -i "s#^ExecStart=#ExecStartPre=/usr/bin/firewall-cmd --direct --add-rule ipv4 filter FORWARD 0 -s 192.168.8.0/21 -j ACCEPT\nExecStartPre=/usr/bin/firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -s 192.168.8.0/21 -o $eth -j MASQUERADE\nExecStart=#g" "/usr/lib/systemd/system/ocserv.service"
+    #sed -i "s#^ExecStart=#ExecStartPre=/usr/bin/firewall-cmd --direct --add-rule ipv4 filter FORWARD 0 -s 192.168.8.0/21 -j ACCEPT\nExecStartPre=/usr/bin/firewall-cmd --direct --add-rule ipv4 nat POSTROUTING 0 -s 192.168.8.0/21 -o ${eth} -j MASQUERADE\nExecStart=#g" "/usr/lib/systemd/system/ocserv.service"
     sed -i "s#/usr/sbin/ocserv#/usr/local/sbin/ocserv#g" "/usr/lib/systemd/system/ocserv.service"
     sed -i "s#/etc/ocserv/ocserv.conf#$confdir/ocserv.conf#g" "/usr/lib/systemd/system/ocserv.service"
 }
@@ -535,20 +540,20 @@ function ConfigFirewall {
 firewalldisactive=$(systemctl is-active firewalld.service)
 iptablesisactive=$(systemctl is-active iptables.service)
 
-if [[ $firewalldisactive = 'active' ]]; then
+if [[ ${firewalldisactive} = 'active' ]]; then
     #添加防火墙允许列表
     echo "Adding firewall ports."
-    firewall-cmd --permanent --add-port=$port/tcp
-    firewall-cmd --permanent --add-port=$port/udp
+    firewall-cmd --permanent --add-port=${port}/tcp
+    firewall-cmd --permanent --add-port=${port}/udp
     echo "Allow firewall to forward."
     firewall-cmd --permanent --add-masquerade
     echo "Reload firewall configure."
     firewall-cmd --reload
-elif [[ $iptablesisactive = 'active' ]]; then
-    iptables -I INPUT -p tcp --dport $port -j ACCEPT
-    iptables -I INPUT -p udp --dport $port -j ACCEPT
+elif [[ ${iptablesisactive} = 'active' ]]; then
+    iptables -I INPUT -p tcp --dport ${port} -j ACCEPT
+    iptables -I INPUT -p udp --dport ${port} -j ACCEPT
     iptables -A FORWARD -s 192.168.8.0/21 -j ACCEPT
-    iptables -t nat -A POSTROUTING -s 192.168.8.0/21 -o $eth -j MASQUERADE
+    iptables -t nat -A POSTROUTING -s 192.168.8.0/21 -o ${eth} -j MASQUERADE
     service iptables save
 else
     printf "\e[33mWARNING!!! Either firewalld or iptables is NOT Running! \e[0m\n"
@@ -575,9 +580,9 @@ function PrintResult {
     #检测防火墙和ocserv服务是否正常
     clear
     printf "\e[36mChenking Firewall status...\e[0m\n"
-    iptables -L -n | grep --color=auto -E "($port|192.168.8.0)"
-    line=$(iptables -L -n | grep -c -E "($port|192.168.8.0)")
-    if [[ $line -ge 2 ]]
+    iptables -L -n | grep --color=auto -E "(${port}|192.168.8.0)"
+    line=$(iptables -L -n | grep -c -E "(${port}|192.168.8.0)")
+    if [[ ${line} -ge 2 ]]
     then
         printf "\e[34mFirewall is Fine! \e[0m\n"
     else
@@ -586,10 +591,10 @@ function PrintResult {
 
     echo
     printf "\e[36mChenking ocserv service status...\e[0m\n"
-    netstat -anp | grep ":$port" | grep --color=auto -E "($port|ocserv|tcp|udp)"
-    linetcp=$(netstat -anp | grep ":$port" | grep ocserv | grep tcp | wc -l)
-    lineudp=$(netstat -anp | grep ":$port" | grep ocserv | grep udp | wc -l)
-    if [[ $linetcp -ge 1 && $lineudp -ge 1 ]]
+    netstat -anp | grep ":${port}" | grep --color=auto -E "(${port}|ocserv|tcp|udp)"
+    linetcp=$(netstat -anp | grep ":${port}" | grep ocserv | grep tcp | wc -l)
+    lineudp=$(netstat -anp | grep ":${port}" | grep ocserv | grep udp | wc -l)
+    if [[ ${linetcp} -ge 1 && ${lineudp} -ge 1 ]]
     then
         printf "\e[34mocserv service is Fine! \e[0m\n"
     else
@@ -601,11 +606,11 @@ function PrintResult {
     if there are \e[33mNO WARNING\e[0m above, then you can connect to
     your ocserv VPN Server with the default user/password below:
     ======================================\n"
-    echo -e "IPv4:\t\t\e[34m$(echo $ipv4)\e[0m"
-    echo -e "IPv6:\t\t\e[34m$(echo $ipv6)\e[0m"
-    echo -e "Port:\t\t\e[34m$port\e[0m"
-    echo -e "username:\t\e[34m$username\e[0m"
-    echo -e "password:\t\e[34m$password\e[0m"
+    echo -e "IPv4:\t\t\e[34m$(echo ${ipv4})\e[0m"
+    echo -e "IPv6:\t\t\e[34m$(echo ${ipv6})\e[0m"
+    echo -e "Port:\t\t\e[34m${port}\e[0m"
+    echo -e "Username:\t\e[34m${username}\e[0m"
+    echo -e "Password:\t\e[34m${password}\e[0m"
 }
 
 ConfigEnvironmentVariable
