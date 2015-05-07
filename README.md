@@ -21,4 +21,4 @@ Ocserv install script for CentOS&RHEL 7
 * ConfigOcserv // 配置 ocserv，包括修改 ocserv.conf，配置 ocserv.service<br />
 * ConfigFirewall // 配置防火墙，会自动判断防火墙为 iptables 或 firewalld<br />
 * ConfigSystem  // 配置系统<br />
-* PrintResult // 大约最后的安装结果和 VPN 账号等<br />
+* PrintResult // 打印最后的安装结果和 VPN 账号等<br />
