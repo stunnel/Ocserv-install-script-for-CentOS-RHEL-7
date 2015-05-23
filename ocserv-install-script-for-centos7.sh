@@ -147,12 +147,14 @@ function CompileOcserv {
     http-parser-devel http-parser protobuf-c-devel protobuf-c \
     pcllib-devel pcllib cyrus-sasl-gssapi dbus-devel
 
+:<<_EOF_
     wget -t 0 -T 60 "http://ftp.gnu.org/gnu/libtasn1/libtasn1-${libtasn1_version}.tar.gz"
     tar axf libtasn1-${libtasn1_version}.tar.gz
     cd libtasn1-${libtasn1_version}
     ./configure --prefix=/usr --libdir=/usr/lib64 --includedir=/usr/include
     make && make install
     cd ..
+_EOF_
 
     #增加libgnutls环境变量
      ##export LIBGNUTLS_CFLAGS="-I/usr/include/" LIBGNUTLS_LIBS="-L/usr/lib/ -lgnutls"
