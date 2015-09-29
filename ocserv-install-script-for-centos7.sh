@@ -229,7 +229,7 @@ _EOF_
     sed -i "s/udp-port = 443/udp-port = ${port}/g" "${confdir}/ocserv.conf"
     sed -i "s/default-domain = example.com/#default-domain = example.com/g" "${confdir}/ocserv.conf"
     sed -i "s/ipv4-network = 192.168.1.0/ipv4-network = 192.168.8.0/g" "${confdir}/ocserv.conf"
-    sed -i "s/ipv4-netmask = 255.255.255.0/ipv4-netmask = 255.255.251.0/g" "${confdir}/ocserv.conf"
+    sed -i "s/ipv4-netmask = 255.255.255.0/ipv4-netmask = 255.255.248.0/g" "${confdir}/ocserv.conf"
     sed -i "s/dns = 192.168.1.2/dns = 8.8.8.8\ndns = 8.8.4.4/g" "${confdir}/ocserv.conf"
     sed -i "s/run-as-group = daemon/run-as-group = nobody/g" "${confdir}/ocserv.conf"
     sed -i "s/cookie-timeout = 300/cookie-timeout = 86400/g" "${confdir}/ocserv.conf"
