@@ -2,11 +2,15 @@
 ####################################################
 #                                                  #
 # This is a ocserv installation for CentOS 7       #
-# Version: 1.2.4 20150929                          #
+# Version: 1.2.5 20151009                          #
 # Author: Travis Lee                               #
 # Website: https://www.stunnel.info                #
 #                                                  #
 ####################################################
+
+#  Version: 1.2.5 20151009
+#  *源码下载改回作者的官方网站
+#  *更新ocserv的版本为0.10.9
 
 #  Version: 1.2.4 20150929
 #  *源码下载改为从 github 下载，作者网站似乎挂了
@@ -43,7 +47,7 @@ cd ${basepath}
 
 function ConfigEnvironmentVariable {
     #ocserv版本
-    ocserv_version="0_10_7"
+    ocserv_version="0.10.9"
     version=${1-${ocserv_version}}
     libtasn1_version=4.7
     #变量设置
@@ -150,7 +154,7 @@ function CompileOcserv {
     gcc pcre-devel openssl openssl-devel curl-devel \
     freeradius-client-devel freeradius-client lz4-devel lz4 \
     http-parser-devel http-parser protobuf-c-devel protobuf-c \
-    pcllib-devel pcllib cyrus-sasl-gssapi dbus-devel
+    pcllib-devel pcllib cyrus-sasl-gssapi dbus-devel policycoreutils gperf
 
 :<<_EOF_
     wget -t 0 -T 60 "http://ftp.gnu.org/gnu/libtasn1/libtasn1-${libtasn1_version}.tar.gz"
@@ -165,7 +169,8 @@ _EOF_
      ##export LIBGNUTLS_CFLAGS="-I/usr/include/" LIBGNUTLS_LIBS="-L/usr/lib/ -lgnutls"
 
     #下载ocserv并编译安装
-    wget -t 0 -T 60 "https://github.com/mtmiller/ocserv/archive/ocserv_${version}.tar.gz" -O "ocserv-${version}.tar.gz"
+    wget -t 0 -T 60 "ftp://ftp.infradead.org/pub/ocserv/ocserv-${version}.tar.xz"
+    #wget -t 0 -T 60 "https://github.com/mtmiller/ocserv/archive/ocserv_${version}.tar.gz" -O "ocserv-${version}.tar.gz"
     tar axf ocserv-${version}.tar.gz
     cd ocserv-${version}
     sed -i 's/#define MAX_CONFIG_ENTRIES.*/#define MAX_CONFIG_ENTRIES 200/g' src/vpn.h
