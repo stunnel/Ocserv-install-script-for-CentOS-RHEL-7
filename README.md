@@ -1,4 +1,7 @@
-EPEL已经提供二进制包，Debian、Fedoras也有二进制包，请使用二进制包安装。配置可以参考本脚本。
+EPEL 已经提供二进制包，本脚本不再维护
+二进制安装脚本请使用 https://github.com/travislee8964/ocserv-auto
+
+
 Ocserv install script for CentOS&RHEL 7
 =======================================
 这是 ocserv 在 CentOS 7 和 RHEL 7 的一键安装脚本，可以在最小化安装环境的 CentOS 7 和 RHEL 7 下一键部署 ocserv。<br />
